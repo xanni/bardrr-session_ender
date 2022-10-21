@@ -36,6 +36,6 @@ function initializeClickhouse() {
 }
 
 async function getSessionsToEnd() {
-  postgres.query('SELECT ');
+  postgres.query('SELECT id FROM session_metadata WHERE lastEventTimestamp');
 }
 
