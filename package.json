@@ -18,7 +18,8 @@
   },
   "homepage": "https://github.com/bard-rr/session_ender#readme",
   "dependencies": {
-    "@clickhouse/client": "^0.0.8"
+    "@clickhouse/client": "^0.0.8",
+    "pg": "^8.8.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.20"

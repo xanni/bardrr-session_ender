@@ -18,3 +18,5 @@
 
 - plan of attack
   - implement querying from clickhouse
+  - set up postgres and put some mock data in it
+    - make a script that sets up the db
