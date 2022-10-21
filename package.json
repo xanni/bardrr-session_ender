@@ -19,6 +19,7 @@
   "homepage": "https://github.com/bard-rr/session_ender#readme",
   "dependencies": {
     "@clickhouse/client": "^0.0.8",
+    "dotenv": "^16.0.3",
     "pg": "^8.8.0"
   },
   "devDependencies": {

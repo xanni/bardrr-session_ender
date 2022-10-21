@@ -20,3 +20,4 @@
   - implement querying from clickhouse
   - set up postgres and put some mock data in it
     - make a script that sets up the db
+  - implement the pseudocode except for moving to clickhouse and see if it is as expected
