@@ -1,3 +1,8 @@
+/*
+todo
+  - try / catch blocks as needed
+*/
+
 // - pseudocode:
 //   - iterate over sessions that have started but not yet ended (i.e. the entirety of the intermediary store)
 //     - if last event timestamp is not within the last X minutes, then end the session
@@ -22,8 +27,8 @@ async function main() {
   postgres = await initializePostgres();
   clickhouse = initializeClickhouse();
 
-  const expiredSessions = await getExpiredSessions();
-  console.log(expiredSessions.rows);
+  const expiredSessionIds = await getExpiredSessionIds();
+  console.log(expiredSessionIds);
 
   await postgres.end();
 }
@@ -44,12 +49,13 @@ function initializeClickhouse() {
 // ('d', 0, NULL, 86000),
 // ('e', 0, NULL, 18000);
 
-function getExpiredSessions() {
+async function getExpiredSessionIds() {
   const text = 'SELECT id FROM session_metadata WHERE lastEventTimestamp < $1';
   // todo
   // const values = [Date.now() - (MAX_IDLE_TIME + GRACE_TIME)];
   const values = [100000 - (MAX_IDLE_TIME + GRACE_TIME)];
-  return postgres.query(text, values);
+  const result = await postgres.query(text, values);
+  return result.rows.map(({ id }) => id);
 }
 
 main();
