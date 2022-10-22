@@ -1,6 +1,6 @@
 // - pseudocode:
 //   - iterate over sessions that have started but not yet ended (i.e. the entirety of the intermediary store)
-//     - if last event timestamp is not withing the last X minutes, then end the session
+//     - if last event timestamp is not within the last X minutes, then end the session
 //       - update the session's end time to be the timestamp of the last event
 //       - calculate any other outstanding session data (e.g. length)
 //       - move the session data from the intermediary store to clickhouse atomically
@@ -12,6 +12,9 @@ require('dotenv').config();
 const { Client } = require('pg');
 const { createClient } = require("@clickhouse/client");
 
+const MAX_IDLE_TIME = 10 * 1000;
+const GRACE_TIME = 5 * 1000;
+
 let postgres;
 let clickhouse;
 
@@ -19,8 +22,8 @@ async function main() {
   postgres = await initializePostgres();
   clickhouse = initializeClickhouse();
 
-  // get everything from postgres
-  const sessionsToEnd = await getSessionsToEnd();
+  const expiredSessions = await getExpiredSessions();
+  console.log(expiredSessions.rows);
 
   await postgres.end();
 }
@@ -35,7 +38,18 @@ function initializeClickhouse() {
   return createClient();
 }
 
-async function getSessionsToEnd() {
-  postgres.query('SELECT id FROM session_metadata WHERE lastEventTimestamp');
+// ('a', 0, NULL, 34000),
+// ('b', 0, NULL, 52000),
+// ('c', 0, NULL, 98000),
+// ('d', 0, NULL, 86000),
+// ('e', 0, NULL, 18000);
+
+function getExpiredSessions() {
+  const text = 'SELECT id FROM session_metadata WHERE lastEventTimestamp < $1';
+  // todo
+  // const values = [Date.now() - (MAX_IDLE_TIME + GRACE_TIME)];
+  const values = [100000 - (MAX_IDLE_TIME + GRACE_TIME)];
+  return postgres.query(text, values);
 }
 
+main();

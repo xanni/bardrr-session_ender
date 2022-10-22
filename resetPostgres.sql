@@ -11,8 +11,8 @@ CREATE TABLE session_metadata (
 );
 
 INSERT INTO session_metadata VALUES
-  ('a', 0, NULL, 34),
-  ('b', 1, NULL, 52),
-  ('c', 2, NULL, 98),
-  ('d', 3, NULL, 71),
-  ('e', 4, NULL, 18);
+  ('a', 0, NULL, 34000),
+  ('b', 0, NULL, 52000),
+  ('c', 0, NULL, 98000),
+  ('d', 0, NULL, 86000),
+  ('e', 0, NULL, 18000);
