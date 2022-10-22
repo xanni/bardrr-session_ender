@@ -2,6 +2,7 @@
 todo
   - try / catch blocks as needed
   - writing to log?
+  - change pg schema - only need id, start_time and most_recent_event_time
 */
 
 // - pseudocode:
@@ -28,8 +29,7 @@ async function main() {
   postgres = await initializePostgres();
   clickhouse = initializeClickhouse();
 
-  const expiredSessionIds = await getExpiredSessionIds();
-  console.log(expiredSessionIds);
+  moveExpiredSessions();
 
   await postgres.end();
 }
@@ -44,19 +44,50 @@ function initializeClickhouse() {
   return createClient();
 }
 
+async function moveExpiredSessions() {
+  const expiredSessions = await getExpiredSessions();
+  // expiredSessions.forEach(moveExpiredSession);
+}
+
+async function getExpiredSessions() {
+  // const text = 'SELECT id FROM session_metadata WHERE lastEventTimestamp < $1';
+  // todo
+  // const values = [Date.now() - (MAX_IDLE_TIME + GRACE_TIME)];
+  // const values = [100000 - (MAX_IDLE_TIME + GRACE_TIME)];
+  // const result = await postgres.query(text, values);
+
+  // return result.rows;
+
+  const result = await postgres.query('SELECT NOW() as now;');
+  return result;
+}
+
+function moveExpiredSession(session) {
+  console.log('moving:', session);
+  // insertIntoClickhouse(session);
+  // deleteFromPostgres(session);
+}
+
+// { session_id, start_time, last_event_timestamp }
+
+// postgres schema
+// session_id text PRIMARY KEY,
+// start_time bigint NOT NULL,
+// end_time bigint,
+// last_event_timestamp bigint NOT NULL
+
+// clickhouse schema:
+// sessionId String,
+// startTime UInt64,
+// endTime UInt64,
+// lengthMs UInt64,
+// date Date,
+// complete Bool
+
 // ('a', 0, NULL, 34000),
 // ('b', 0, NULL, 52000),
 // ('c', 0, NULL, 98000),
 // ('d', 0, NULL, 86000),
 // ('e', 0, NULL, 18000);
-
-async function getExpiredSessionIds() {
-  const text = 'SELECT id FROM session_metadata WHERE lastEventTimestamp < $1';
-  // todo
-  // const values = [Date.now() - (MAX_IDLE_TIME + GRACE_TIME)];
-  const values = [100000 - (MAX_IDLE_TIME + GRACE_TIME)];
-  const result = await postgres.query(text, values);
-  return result.rows.map(({ id }) => id);
-}
 
 main();

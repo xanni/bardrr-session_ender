@@ -4,10 +4,10 @@ CREATE DATABASE bard;
 \c bard
 
 CREATE TABLE session_metadata (
-  id text PRIMARY KEY,
-  startTime bigint NOT NULL,
-  endTime bigint,
-  lastEventTimestamp bigint NOT NULL
+  session_id text PRIMARY KEY,
+  start_time bigint NOT NULL,
+  end_time bigint,
+  last_event_timestamp bigint NOT NULL
 );
 
 INSERT INTO session_metadata VALUES
