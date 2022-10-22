@@ -1,10 +1,11 @@
 /*
 todo
   - try / catch blocks as needed
+  - writing to log?
 */
 
 // - pseudocode:
-//   - iterate over sessions that have started but not yet ended (i.e. the entirety of the intermediary store)
+//   x- iterate over sessions that have started but not yet ended (i.e. the entirety of the intermediary store)
 //     - if last event timestamp is not within the last X minutes, then end the session
 //       - update the session's end time to be the timestamp of the last event
 //       - calculate any other outstanding session data (e.g. length)

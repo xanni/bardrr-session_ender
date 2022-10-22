@@ -1,4 +1,12 @@
 - pseudocode:
+  - clean
+    - getEndedSessions
+    - for each endedSession
+      - if exists in clickhouse then try delete from postgres, catch log
+      - else try move, catch log
+  - move
+    - try insert into clickhouse, throw
+    - try delete from postgres, throw
   - iterate over sessions that have started but not yet ended (i.e. the entirety of the intermediary store)
     - if last event timestamp is not withing the last X minutes, then end the session
       - update the session's end time to be the timestamp of the last event
@@ -15,6 +23,15 @@
     - at some interval of time related to MAX_IDLE_TIME?
     - what's the objective? are sessions hidden from the user until they are complete? if so then the frequency with which we check to close sessions determines how soon sessions are made visible to the user... if not then it just determines how soon session metadata (e.g. end time, length) becomes correctly populated...
     - maybe just do it continuously for now and revisit later
+  - how to atomically move a session from postgres to clickhouse?
+    - update the session to ended in postgres
+    - attempt write to clickhouse. if that fails then abort. left with nothing in clickhouse and ended session in postgres
+    - attempt delete from postgres. if that fails then abort. left with session in both clickhouse and postgres
+    - how to clean up after failed cases?
+      - iterate over all ended sessions in postgres
+        - check if the session exists in clickhouse
+          - yes: attempt delete from postgres, if fail then abort.
+          - no: try the above process again
 
 - plan of attack
   - implement querying from clickhouse
