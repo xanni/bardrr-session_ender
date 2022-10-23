@@ -20,6 +20,7 @@
   "dependencies": {
     "@clickhouse/client": "^0.0.8",
     "dotenv": "^16.0.3",
+    "node-cron": "^3.0.2",
     "pg": "^8.8.0"
   },
   "devDependencies": {

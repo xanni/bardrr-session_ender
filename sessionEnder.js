@@ -1,6 +1,7 @@
 "use strict";
 
 require('dotenv').config();
+const cron = require('node-cron');
 const { Client } = require('pg');
 const { createClient } = require("@clickhouse/client");
 
@@ -10,7 +11,7 @@ const GRACE_TIME = 5 * 1000;
 let postgresClient;
 let clickhouseClient;
 
-async function main() {
+async function endExpiredSessions() {
   try {
     await initializeDatabaseClients();
   } catch (error) {
@@ -161,4 +162,4 @@ async function terminateClickhouseClient() {
   }
 }
 
-main();
+cron.schedule('* * * * *', endExpiredSessions);

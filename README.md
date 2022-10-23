@@ -1,11 +1,8 @@
 # session_ender
 
 ## todo
-  - try / catch blocks
-  - how to run? (cron job? timed loop?)
   - works with other components?
 
-  - how often to run?
   - `MAX_IDLE_TIME`
   - `GRACE_TIME`
   - write tests?
@@ -28,3 +25,4 @@
   - how often to run?
     - continuously? at some interval of time related to `MAX_IDLE_TIME`? unrelated to `MAX_IDLE_TIME`?
     - what's the objective? are sessions hidden from the user until they are complete? if so then the frequency with which we check to close sessions determines how soon sessions are made visible to the user... if not then it just determines how soon session metadata (e.g. end time, length) becomes correctly populated...
+    - cron job minimum time is 1 minute. i think that's appropriate

@@ -1,6 +1,6 @@
-DROP DATABASE IF EXISTS eventDb;
+DROP DATABASE IF EXISTS eventDb
 
-CREATE DATABASE IF NOT EXISTS eventDb;
+CREATE DATABASE IF NOT EXISTS eventDb
 
 CREATE TABLE IF NOT EXISTS eventDb.sessionTable
 (
@@ -13,4 +13,4 @@ CREATE TABLE IF NOT EXISTS eventDb.sessionTable
   complete Bool
 )
 ENGINE = MergeTree()
-PRIMARY KEY (sessionId);
+PRIMARY KEY (sessionId)
