@@ -32,8 +32,6 @@ async function endExpiredSessions() {
   const expiredSessions = await getExpiredSessions();
   const moveResults = await moveMany(expiredSessions);
 
-  console.log(moveResults);
-
   await postgresClient.end();
 }
 
@@ -62,26 +60,29 @@ function moveMany(sessions) {
 }
 
 async function moveOne(session) {
+  const isInClickhouse = await getIsInClickhouse(session);
   try {
-    if (await !isInClickhouse(session)) await insertIntoClickhouse(session);
+    if (!isInClickhouse) await insertIntoClickhouse(session);
     await deleteFromPostgres(session);
   } catch (error) {
     console.error(new Error('error moving', { cause: error }));
   }
 }
 
-async function isInClickhouse(session) {
+async function getIsInClickhouse(session) {
   const query = 'SELECT * FROM eventDb.sessionTable WHERE sessionId = {sessionId: String}';
   const query_params = { sessionId: session.id }
   const format = 'JSONEachRow'
 
-  const resultSet = await clickhouseClient.query({ query, query_params, format });
+  let resultSet;
+  try {
+    resultSet = await clickhouseClient.query({ query, query_params, format });
+  } catch (error) {
+    throw new Error('error selecting from clickhouse', { cause: error });
+  }
   const dataset = await resultSet.json();
-  console.log('dataset:', dataset);
-  return true;
 
-  // query clickhouse for the session id
-  // if get a result back then true, else false
+  return dataset.length > 0;
 }
 
 function insertIntoClickhouse(session) {
