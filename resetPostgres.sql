@@ -2,16 +2,20 @@ DROP DATABASE IF EXISTS bard;
 CREATE DATABASE bard;
 
 \c bard
-
-CREATE TABLE pending_sessions (
-  id text PRIMARY KEY,
+-- TODO: think about how we know a session is complete.
+CREATE TABLE session_metadata (
+  session_id text PRIMARY KEY,
   start_time bigint NOT NULL,
-  most_recent_event_time bigint NOT NULL
+  end_time bigint,
+  last_event_timestamp bigint NOT NULL
 );
 
-INSERT INTO pending_sessions VALUES
-  ('a', 0, 34000),
-  ('b', 0, 52000),
-  ('c', 0, 98000),
-  ('d', 0, 86000),
-  ('e', 0, 18000);
+INSERT INTO
+  session_metadata
+VALUES
+  ('a', 0, NULL, 56000),
+  ('b', 0, NULL, 30000),
+  ('c', 0, NULL, 48000),
+  ('d', 0, NULL, 21000),
+  ('e', 0, NULL, 17000)
+;

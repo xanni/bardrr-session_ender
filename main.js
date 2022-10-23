@@ -46,6 +46,13 @@ function initializeClickhouseClient() {
   return createClient();
 }
 
+// CREATE TABLE session_metadata (
+//   session_id text PRIMARY KEY,
+//   start_time bigint NOT NULL,
+//   end_time bigint,
+//   last_event_timestamp bigint NOT NULL
+// );
+
 async function getExpiredSessions() {
   const text = 'SELECT * FROM pending_sessions WHERE most_recent_event_time < $1';
   // todo
