@@ -1,12 +1,3 @@
-/*
-todo
-  - try / catch blocks
-  - how to run? (cron job? timed loop?)
-  - how to get MAX_IDLE_TIME and GRACE_TIME?
-  - wrap into object?
-  - write tests?
-*/
-
 "use strict";
 
 require('dotenv').config();
