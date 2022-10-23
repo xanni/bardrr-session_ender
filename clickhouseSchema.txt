@@ -1,3 +1,7 @@
+DROP DATABASE IF EXISTS eventDb
+
+CREATE DATABASE IF NOT EXISTS eventDb
+
 CREATE TABLE IF NOT EXISTS eventDb.sessionTable
 (
   sessionId String,

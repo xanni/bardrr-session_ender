@@ -33,6 +33,7 @@ async function endExpiredSessions() {
   const moveResults = await moveMany(expiredSessions);
 
   await postgresClient.end();
+  await clickhouseClient.close();
 }
 
 async function initializePostgresClient() {
@@ -85,12 +86,52 @@ async function getIsInClickhouse(session) {
   return dataset.length > 0;
 }
 
-function insertIntoClickhouse(session) {
+// clickhouse schema:
+// sessionId String,
+// startTime UInt64,
+// endTime UInt64,
+// lengthMs UInt64,
+// date Date,
+// complete Bool
+
+// let date = this.buildDate(timestamp);
+// let query = `
+//   INSERT INTO eventDb.sessionTable
+//   (sessionId, startTime, date, complete)
+//   VALUES
+//   ('${sessionId}', ${timestamp}, '${date}', ${false})
+// `;
+// await this.client.exec({ query });
+
+async function insertIntoClickhouse(session) {
+  const table = 'eventDb.sessionTable';
+  const values = [
+    {
+      sessionId: session.id,
+      startTime: session.start_time,
+      endTime: session.most_recent_event_time,
+      lengthMs: session.most_recent_event_time - session.start_time,
+      date: buildDate(session.start_time),
+      complete: true,
+    }
+  ];
+  const format = 'JSONEachRow';
+
   try {
-    console.log('inserting the following into clickhouse:', session);
+    console.log('inserting the following into clickhouse:', values[0]);
+    await clickhouseClient.insert({ table, values, format });
   } catch (error) {
     throw new Error('error inserting into clickhouse', { cause: error });
   }
+}
+
+function buildDate(timestamp) {
+  let dateObj = new Date(timestamp);
+  let day = dateObj.getUTCDate();
+  let month = dateObj.getUTCMonth() + 1;
+  let year = dateObj.getUTCFullYear();
+  let finalDate = `${year.toString()}-${month.toString()}-${day.toString()}`;
+  return finalDate;
 }
 
 function deleteFromPostgres(session) {
