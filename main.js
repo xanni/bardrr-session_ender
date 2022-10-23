@@ -1,17 +1,11 @@
 /*
 todo
-  - try / catch blocks as needed
-  - writing to log?
-  - change pg schema - only need id, start_time and most_recent_event_time
+  - try / catch blocks
+  - how to run? (cron job? timed loop?)
+  - how to get MAX_IDLE_TIME and GRACE_TIME?
+  - wrap into object?
+  - write tests?
 */
-
-// - pseudocode:
-//   x- iterate over sessions that have started but not yet ended (i.e. the entirety of the intermediary store)
-//     - if last event timestamp is not within the last X minutes, then end the session
-//       - update the session's end time to be the timestamp of the last event
-//       - calculate any other outstanding session data (e.g. length)
-//       - move the session data from the intermediary store to clickhouse atomically
-//         - what if a session with the same id already exists in clickhouse? the code that starts a session will protect against this
 
 "use strict";
 
@@ -30,31 +24,24 @@ async function endExpiredSessions() {
   clickhouseClient = initializeClickhouseClient();
 
   const expiredSessions = await getExpiredSessions();
-  const moveResults = await moveMany(expiredSessions);
+  await moveMany(expiredSessions);
 
   await postgresClient.end();
   await clickhouseClient.close();
 }
 
 async function initializePostgresClient() {
-  const postgres = new Client();
-  await postgres.connect();
-  return postgres;
+  const postgresClient = new Client();
+  await postgresClient.connect();
+  return postgresClient;
 }
 
 function initializeClickhouseClient() {
   return createClient();
 }
 
-// CREATE TABLE session_metadata (
-//   session_id text PRIMARY KEY,
-//   start_time bigint NOT NULL,
-//   end_time bigint,
-//   last_event_timestamp bigint NOT NULL
-// );
-
 async function getExpiredSessions() {
-  const text = 'SELECT * FROM pending_sessions WHERE most_recent_event_time < $1';
+  const text = 'SELECT * FROM session_metadata WHERE last_event_timestamp < $1';
   // todo
   // const values = [Date.now() - (MAX_IDLE_TIME + GRACE_TIME)];
   const values = [100000 - (MAX_IDLE_TIME + GRACE_TIME)];
@@ -63,8 +50,9 @@ async function getExpiredSessions() {
   return result.rows;
 }
 
-function moveMany(sessions) {
-  return Promise.allSettled(sessions.map(moveOne));
+async function moveMany(sessions) {
+  await Promise.allSettled(sessions.map(moveOne));
+  return;
 }
 
 async function moveOne(session) {
@@ -79,8 +67,8 @@ async function moveOne(session) {
 
 async function getIsInClickhouse(session) {
   const query = 'SELECT * FROM eventDb.sessionTable WHERE sessionId = {sessionId: String}';
-  const query_params = { sessionId: session.id }
-  const format = 'JSONEachRow'
+  const query_params = { sessionId: session.session_id };
+  const format = 'JSONEachRow';
 
   let resultSet;
   try {
@@ -93,31 +81,14 @@ async function getIsInClickhouse(session) {
   return dataset.length > 0;
 }
 
-// clickhouse schema:
-// sessionId String,
-// startTime UInt64,
-// endTime UInt64,
-// lengthMs UInt64,
-// date Date,
-// complete Bool
-
-// let date = this.buildDate(timestamp);
-// let query = `
-//   INSERT INTO eventDb.sessionTable
-//   (sessionId, startTime, date, complete)
-//   VALUES
-//   ('${sessionId}', ${timestamp}, '${date}', ${false})
-// `;
-// await this.client.exec({ query });
-
 async function insertIntoClickhouse(session) {
   const table = 'eventDb.sessionTable';
   const values = [
     {
-      sessionId: session.id,
+      sessionId: session.session_id,
       startTime: session.start_time,
-      endTime: session.most_recent_event_time,
-      lengthMs: session.most_recent_event_time - session.start_time,
+      endTime: session.last_event_timestamp,
+      lengthMs: session.last_event_timestamp - session.start_time,
       date: buildDate(session.start_time),
       complete: true,
     }
@@ -144,34 +115,12 @@ function buildDate(timestamp) {
 async function deleteFromPostgres(session) {
   try {
     console.log('deleting the following from postgres:', session);
-    const text = 'DELETE FROM pending_sessions WHERE id = $1'
-    const values = [session.id];
+    const text = 'DELETE FROM session_metadata WHERE session_id = $1'
+    const values = [session.session_id];
     const result = await postgresClient.query(text, values);
   } catch (error) {
     throw new Error('error deleting from postgres', { cause: error });
   }
 }
-
-// { session_id, start_time, last_event_timestamp }
-
-// postgres schema
-// session_id text PRIMARY KEY,
-// start_time bigint NOT NULL,
-// end_time bigint,
-// last_event_timestamp bigint NOT NULL
-
-// clickhouse schema:
-// sessionId String,
-// startTime UInt64,
-// endTime UInt64,
-// lengthMs UInt64,
-// date Date,
-// complete Bool
-
-// ('a', 0, NULL, 34000),
-// ('b', 0, NULL, 52000),
-// ('c', 0, NULL, 98000),
-// ('d', 0, NULL, 86000),
-// ('e', 0, NULL, 18000);
 
 endExpiredSessions();
