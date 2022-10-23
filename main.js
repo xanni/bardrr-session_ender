@@ -32,10 +32,10 @@ function initializeClickhouseClient() {
 }
 
 async function getExpiredSessions() {
-  const text = 'SELECT * FROM session_metadata WHERE last_event_timestamp < $1';
+  const text = 'SELECT * FROM pending_sessions WHERE most_recent_event_time < $1';
   // todo
   // const values = [Date.now() - (MAX_IDLE_TIME + GRACE_TIME)];
-  const values = [100000 - (MAX_IDLE_TIME + GRACE_TIME)];
+  const values = [60000 - (MAX_IDLE_TIME + GRACE_TIME)];
   const result = await postgresClient.query(text, values);
 
   return result.rows;
@@ -47,8 +47,8 @@ async function moveMany(sessions) {
 }
 
 async function moveOne(session) {
-  const isInClickhouse = await getIsInClickhouse(session);
   try {
+    const isInClickhouse = await getIsInClickhouse(session);
     if (!isInClickhouse) await insertIntoClickhouse(session);
     await deleteFromPostgres(session);
   } catch (error) {
@@ -78,16 +78,17 @@ async function insertIntoClickhouse(session) {
     {
       sessionId: session.session_id,
       startTime: session.start_time,
-      endTime: session.last_event_timestamp,
-      lengthMs: session.last_event_timestamp - session.start_time,
+      endTime: session.most_recent_event_time,
+      lengthMs: session.most_recent_event_time - session.start_time,
       date: buildDate(session.start_time),
+      originHost: session.origin_host,
       complete: true,
     }
   ];
   const format = 'JSONEachRow';
 
+  console.log('inserting the following into clickhouse:', values[0]);
   try {
-    console.log('inserting the following into clickhouse:', values[0]);
     await clickhouseClient.insert({ table, values, format });
   } catch (error) {
     throw new Error('error inserting into clickhouse', { cause: error });
@@ -104,11 +105,12 @@ function buildDate(timestamp) {
 }
 
 async function deleteFromPostgres(session) {
+  const text = 'DELETE FROM pending_sessions WHERE session_id = $1'
+  const values = [session.session_id];
+
+  console.log('deleting the following from postgres:', session);
   try {
-    console.log('deleting the following from postgres:', session);
-    const text = 'DELETE FROM session_metadata WHERE session_id = $1'
-    const values = [session.session_id];
-    const result = await postgresClient.query(text, values);
+    await postgresClient.query(text, values);
   } catch (error) {
     throw new Error('error deleting from postgres', { cause: error });
   }
