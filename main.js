@@ -134,9 +134,12 @@ function buildDate(timestamp) {
   return finalDate;
 }
 
-function deleteFromPostgres(session) {
+async function deleteFromPostgres(session) {
   try {
     console.log('deleting the following from postgres:', session);
+    const text = 'DELETE FROM pending_sessions WHERE id = $1'
+    const values = [session.id];
+    const result = await postgresClient.query(text, values);
   } catch (error) {
     throw new Error('error deleting from postgres', { cause: error });
   }
