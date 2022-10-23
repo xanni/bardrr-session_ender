@@ -10,20 +10,39 @@ const GRACE_TIME = 5 * 1000;
 let postgresClient;
 let clickhouseClient;
 
-async function endExpiredSessions() {
+async function main() {
+  try {
+    await initializeDatabaseClients();
+  } catch (error) {
+    console.error(new Error('error initializing database clients', { cause: error }));
+    await terminateDatabaseClients();
+    return;
+  }
+
+  try {
+    const expiredSessions = await getExpiredSessions();
+    await moveMany(expiredSessions);
+  } catch (error) {
+    console.error(error);
+  }
+
+  await terminateDatabaseClients();
+}
+
+async function initializeDatabaseClients() {
   postgresClient = await initializePostgresClient();
   clickhouseClient = initializeClickhouseClient();
-
-  const expiredSessions = await getExpiredSessions();
-  await moveMany(expiredSessions);
-
-  await postgresClient.end();
-  await clickhouseClient.close();
 }
 
 async function initializePostgresClient() {
   const postgresClient = new Client();
-  await postgresClient.connect();
+
+  try {
+    await postgresClient.connect();
+  } catch (error) {
+    throw new Error('error connecting to postgres', { cause: error });
+  }
+
   return postgresClient;
 }
 
@@ -36,14 +55,19 @@ async function getExpiredSessions() {
   // todo
   // const values = [Date.now() - (MAX_IDLE_TIME + GRACE_TIME)];
   const values = [60000 - (MAX_IDLE_TIME + GRACE_TIME)];
-  const result = await postgresClient.query(text, values);
+
+  let result;
+  try {
+    result = await postgresClient.query(text, values);
+  } catch (error) {
+    throw new Error('error getting expired sessions', { cause: error });
+  }
 
   return result.rows;
 }
 
 async function moveMany(sessions) {
   await Promise.allSettled(sessions.map(moveOne));
-  return;
 }
 
 async function moveOne(session) {
@@ -116,4 +140,25 @@ async function deleteFromPostgres(session) {
   }
 }
 
-endExpiredSessions();
+async function terminateDatabaseClients() {
+  await terminatePostgresClient();
+  await terminateClickhouseClient();
+}
+
+async function terminatePostgresClient() {
+  try {
+    await postgresClient.end();
+  } catch (error) {
+    console.error(new Error('error terminating postgres client', { cause: error }));
+  }
+}
+
+async function terminateClickhouseClient() {
+  try {
+    await clickhouseClient.close();
+  } catch (error) {
+    console.error(new Error('error terminating clickhouse client', { cause: error }));
+  }
+}
+
+main();
