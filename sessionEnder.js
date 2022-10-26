@@ -5,7 +5,7 @@ const cron = require("node-cron");
 const { Client } = require("pg");
 const { createClient } = require("@clickhouse/client");
 
-const MAX_IDLE_TIME = 10 * 1000;
+const MAX_IDLE_TIME = 5 * 1000;
 const GRACE_TIME = 5 * 1000;
 
 let postgresClient;
