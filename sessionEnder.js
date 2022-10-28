@@ -57,7 +57,7 @@ async function getExpiredSessions() {
   const text =
     "SELECT * FROM pending_sessions WHERE most_recent_event_time < $1";
 
-  // todo
+  // totoggle
   const values = [Date.now() - (MAX_IDLE_TIME + GRACE_TIME)];
   //const values = [60000 - (MAX_IDLE_TIME + GRACE_TIME)];
 
@@ -109,6 +109,7 @@ async function insertIntoClickhouse(session) {
     session.most_recent_event_time,
     10
   );
+  const errorCount = Number.parseInt(session.error_count, 10);
   const values = [
     {
       sessionId: session.session_id,
@@ -117,7 +118,7 @@ async function insertIntoClickhouse(session) {
       lengthMs: mostRecentEventTime - startTime,
       date: buildDate(startTime),
       originHost: session.origin_host,
-      complete: true,
+      errorCount,
     },
   ];
   const format = "JSONEachRow";
