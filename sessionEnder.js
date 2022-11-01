@@ -50,7 +50,7 @@ async function initializePostgresClient() {
 }
 
 function initializeClickhouseClient() {
-  return createClient();
+  return createClient({ host: `http://${process.env.CLICKHOUSE_HOST}:8123` });
 }
 
 async function getExpiredSessions() {
