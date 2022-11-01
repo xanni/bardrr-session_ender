@@ -8,4 +8,4 @@ RUN npm install
 
 COPY . .
 
-CMD ["node", "sessionEnder.js"]
+CMD ["npm", "start"]

@@ -5,6 +5,7 @@
   "main": "main.js",
   "scripts": {
     "dev": "nodemon sessionEnder.js",
+    "start": "NODE_ENV=production node sessionEnder.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

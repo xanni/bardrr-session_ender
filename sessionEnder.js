@@ -50,7 +50,13 @@ async function initializePostgresClient() {
 }
 
 function initializeClickhouseClient() {
-  return createClient();
+  let host;
+  if (process.env.NODE_ENV === "production") {
+    host = "http://clickhouse:8123";
+  } else {
+    host = "http://localhost:8123";
+  }
+  return createClient({ host });
 }
 
 async function getExpiredSessions() {
