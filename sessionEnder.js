@@ -112,7 +112,6 @@ async function insertIntoClickhouse(session) {
     10
   );
   const errorCount = Number.parseInt(session.error_count, 10);
-  console.log(session);
   const values = [
     {
       sessionId: session.session_id,
