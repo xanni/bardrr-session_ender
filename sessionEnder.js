@@ -5,8 +5,7 @@ const cron = require("node-cron");
 const { Client } = require("pg");
 const { createClient } = require("@clickhouse/client");
 
-const MAX_IDLE_TIME = 5 * 1000;
-const GRACE_TIME = 5 * 1000;
+const GRACE_TIME = 10 * 1000;
 
 let postgresClient;
 let clickhouseClient;
@@ -54,12 +53,15 @@ function initializeClickhouseClient() {
 }
 
 async function getExpiredSessions() {
-  const text =
-    "SELECT * FROM pending_sessions WHERE most_recent_event_time < $1";
-
-  // totoggle
-  const values = [Date.now() - (MAX_IDLE_TIME + GRACE_TIME)];
-  //const values = [60000 - (MAX_IDLE_TIME + GRACE_TIME)];
+  const text = `
+    SELECT
+      *
+    FROM
+      pending_sessions
+    WHERE
+      $1 - most_recent_event_time > max_idle_time + $2
+  `;
+  const values = [Date.now(), GRACE_TIME];
 
   let result;
   try {
