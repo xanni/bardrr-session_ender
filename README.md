@@ -1,6 +1,6 @@
 <img src="./Asset 10-8.png" width="100">
 
-# session_ender
+# Bard Session Ender
 
 This is a nodejs application that starts a cron job that will end the pending session created by the bardrr agent.
 
