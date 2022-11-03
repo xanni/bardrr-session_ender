@@ -1,28 +1,11 @@
+<img src="./Asset 10-8.png" width="100">
+
 # session_ender
 
-## todo
-  - works with other components?
+This is a nodejs application that starts a cron job that will end the pending session created by the bardrr agent.
 
-  - `MAX_IDLE_TIME`
-  - `GRACE_TIME`
-  - write tests?
-  - wrap into object?
+## Setup
 
-## pseudocode:
-  - initialize database clients
-  - get expired sessions (i.e. sessions where most recent event happened more than MAX_IDLE_TIME + GRACE_PERIOD ago) from postgres
-  - move expired sessions from postgres to clickhouse
-    - if session is not in clickhouse (see note below) then try to insert session into clickhouse, if fail then abort move
-    - delete session from postgres
-  - terminate database clients
+Clone the open source reposatory from [Here](https://github.com/bard-rr/session_ender). Run the application using:
 
-  - note: need this check because the expired session might be one that the script has previously tried and failed to move from postgres into clickhouse, specifically one that the script has previously written to clickhouse but failed to delete from postgres
-
-## issues and discussion:
-  - re: `MAX_IDLE_TIME + GRACE_TIME`
-    - `MAX_IDLE_TIME` has to be in sync with agent
-    - `GRACE_TIME` should be... 1 minute?
-  - how often to run?
-    - continuously? at some interval of time related to `MAX_IDLE_TIME`? unrelated to `MAX_IDLE_TIME`?
-    - what's the objective? are sessions hidden from the user until they are complete? if so then the frequency with which we check to close sessions determines how soon sessions are made visible to the user... if not then it just determines how soon session metadata (e.g. end time, length) becomes correctly populated...
-    - cron job minimum time is 1 minute. i think that's appropriate
+`npm run start`
