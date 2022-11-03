@@ -1,4 +1,4 @@
-<img src="./Asset 10-8.png" width="100">
+<img src="https://github.com/bard-rr/.github/blob/main/profile/logo2.png?raw=true" width="300">
 
 # Bard Session Ender
 
