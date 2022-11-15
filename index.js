@@ -1,8 +1,8 @@
 "use strict";
 
 require("dotenv").config();
+const initializePostgresClient = require('./initializePostgresClient');
 const cron = require("node-cron");
-const { Client } = require("pg");
 const { createClient } = require("@clickhouse/client");
 
 const GRACE_TIME = 10 * 1000;
@@ -34,18 +34,6 @@ async function endExpiredSessions() {
 async function initializeDatabaseClients() {
   postgresClient = await initializePostgresClient();
   clickhouseClient = initializeClickhouseClient();
-}
-
-async function initializePostgresClient() {
-  const postgresClient = new Client();
-
-  try {
-    await postgresClient.connect();
-  } catch (error) {
-    throw new Error("error connecting to postgres", { cause: error });
-  }
-
-  return postgresClient;
 }
 
 function initializeClickhouseClient() {
@@ -180,3 +168,10 @@ async function terminateClickhouseClient() {
 }
 
 cron.schedule("* * * * *", endExpiredSessions);
+
+module.exports = {
+  endExpiredSessions,
+  initializeDatabaseClients,
+  initializePostgresClient,
+  initializeClickhouseClient,
+};
