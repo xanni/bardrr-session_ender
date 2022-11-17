@@ -3,9 +3,7 @@
 require("dotenv").config();
 const initializePostgresClient = require('./helpers/initializePostgresClient');
 const initializeClickhouseClient = require('./helpers/initializeClickhouseClient');
-const getIsInClickhouse = require('./helpers/getIsInClickhouse');
-const insertIntoClickhouse = require('./helpers/insertIntoClickhouse');
-const deleteFromPostgres = require('./helpers/deleteFromPostgres');
+const moveOne = require('./helpers/moveOne');
 const cron = require("node-cron");
 
 const GRACE_TIME = 10 * 1000;
@@ -61,17 +59,9 @@ async function getExpiredSessions() {
 }
 
 async function moveMany(sessions) {
-  await Promise.allSettled(sessions.map(moveOne));
-}
-
-async function moveOne(session) {
-  try {
-    const isInClickhouse = await getIsInClickhouse(clickhouseClient, session);
-    if (!isInClickhouse) await insertIntoClickhouse(clickhouseClient, session);
-    await deleteFromPostgres(postgresClient, session);
-  } catch (error) {
-    console.error(new Error("error moving", { cause: error }));
-  }
+  await Promise.allSettled(sessions.map(session => {
+    return moveOne(postgresClient, clickhouseClient, session);
+  }));
 }
 
 async function terminateDatabaseClients() {
