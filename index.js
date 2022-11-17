@@ -3,6 +3,9 @@
 require("dotenv").config();
 const initializePostgresClient = require('./helpers/initializePostgresClient');
 const initializeClickhouseClient = require('./helpers/initializeClickhouseClient');
+const getIsInClickhouse = require('./helpers/getIsInClickhouse');
+const insertIntoClickhouse = require('./helpers/insertIntoClickhouse');
+const deleteFromPostgres = require('./helpers/deleteFromPostgres');
 const cron = require("node-cron");
 
 const GRACE_TIME = 10 * 1000;
@@ -36,8 +39,6 @@ async function initializeDatabaseClients() {
   clickhouseClient = initializeClickhouseClient();
 }
 
-
-
 async function getExpiredSessions() {
   const text = `
     SELECT
@@ -65,78 +66,11 @@ async function moveMany(sessions) {
 
 async function moveOne(session) {
   try {
-    const isInClickhouse = await getIsInClickhouse(session);
-    if (!isInClickhouse) await insertIntoClickhouse(session);
-    await deleteFromPostgres(session);
+    const isInClickhouse = await getIsInClickhouse(clickhouseClient, session);
+    if (!isInClickhouse) await insertIntoClickhouse(clickhouseClient, session);
+    await deleteFromPostgres(postgresClient, session);
   } catch (error) {
     console.error(new Error("error moving", { cause: error }));
-  }
-}
-
-async function getIsInClickhouse(session) {
-  const query =
-    "SELECT * FROM eventDb.sessionTable WHERE sessionId = {sessionId: String}";
-  const query_params = { sessionId: session.session_id };
-  const format = "JSONEachRow";
-
-  let resultSet;
-  try {
-    resultSet = await clickhouseClient.query({ query, query_params, format });
-  } catch (error) {
-    throw new Error("error selecting from clickhouse", { cause: error });
-  }
-  const dataset = await resultSet.json();
-
-  return dataset.length > 0;
-}
-
-async function insertIntoClickhouse(session) {
-  const table = "eventDb.sessionTable";
-  const startTime = Number.parseInt(session.start_time, 10);
-  const mostRecentEventTime = Number.parseInt(
-    session.most_recent_event_time,
-    10
-  );
-  const errorCount = Number.parseInt(session.error_count, 10);
-  const values = [
-    {
-      sessionId: session.session_id,
-      startTime,
-      endTime: mostRecentEventTime,
-      lengthMs: mostRecentEventTime - startTime,
-      date: buildDate(startTime),
-      appName: session.app_name,
-      errorCount,
-    },
-  ];
-  const format = "JSONEachRow";
-
-  console.log("inserting the following into clickhouse:", values[0]);
-  try {
-    await clickhouseClient.insert({ table, values, format });
-  } catch (error) {
-    throw new Error("error inserting into clickhouse", { cause: error });
-  }
-}
-
-function buildDate(timestamp) {
-  let dateObj = new Date(timestamp);
-  let day = dateObj.getUTCDate();
-  let month = dateObj.getUTCMonth() + 1;
-  let year = dateObj.getUTCFullYear();
-  let finalDate = `${year.toString()}-${month.toString()}-${day.toString()}`;
-  return finalDate;
-}
-
-async function deleteFromPostgres(session) {
-  const text = "DELETE FROM pending_sessions WHERE session_id = $1";
-  const values = [session.session_id];
-
-  console.log("deleting the following from postgres:", session);
-  try {
-    await postgresClient.query(text, values);
-  } catch (error) {
-    throw new Error("error deleting from postgres", { cause: error });
   }
 }
 
@@ -165,11 +99,5 @@ async function terminateClickhouseClient() {
   }
 }
 
-cron.schedule("* * * * *", endExpiredSessions);
-
-module.exports = {
-  endExpiredSessions,
-  initializeDatabaseClients,
-  initializePostgresClient,
-  initializeClickhouseClient,
-};
+// cron.schedule("* * * * *", endExpiredSessions);
+endExpiredSessions();
