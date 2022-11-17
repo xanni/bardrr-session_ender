@@ -1,9 +1,9 @@
 "use strict";
 
 require("dotenv").config();
-const initializePostgresClient = require('./initializePostgresClient');
+const initializePostgresClient = require('./helpers/initializePostgresClient');
+const initializeClickhouseClient = require('./helpers/initializeClickhouseClient');
 const cron = require("node-cron");
-const { createClient } = require("@clickhouse/client");
 
 const GRACE_TIME = 10 * 1000;
 
@@ -36,9 +36,7 @@ async function initializeDatabaseClients() {
   clickhouseClient = initializeClickhouseClient();
 }
 
-function initializeClickhouseClient() {
-  return createClient({ host: `http://${process.env.CLICKHOUSE_HOST}:8123` });
-}
+
 
 async function getExpiredSessions() {
   const text = `

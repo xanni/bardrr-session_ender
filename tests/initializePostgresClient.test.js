@@ -1,6 +1,6 @@
-const pg = require('pg');
-const initializePostgresClient = require('./initializePostgresClient');
+const initializePostgresClient = require('../helpers/initializePostgresClient');
 
+const pg = require('pg');
 jest.mock('pg');
 
 describe('initializePostgresClient', () => {
