@@ -2,10 +2,9 @@
   "name": "session_ender",
   "version": "1.0.0",
   "description": "",
-  "main": "main.js",
   "scripts": {
-    "dev": "nodemon sessionEnder.js",
-    "start": "NODE_ENV=production node sessionEnder.js",
+    "dev": "nodemon index.js",
+    "start": "NODE_ENV=production node index.js",
     "test": "jest --detectOpenHandles"
   },
   "repository": {

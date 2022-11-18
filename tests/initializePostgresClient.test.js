@@ -17,9 +17,10 @@ describe('initializePostgresClient', () => {
   });
 
   test('throws error if unsuccessful', async () => {
+    const mockErrorMessage = 'mockErrorMessage';
     const mockClientInstance = {
       connect: async () => {
-        throw new Error();
+        throw new Error(mockErrorMessage);
       },
     };
     pg.Client.mockReturnValueOnce(mockClientInstance);
@@ -27,7 +28,7 @@ describe('initializePostgresClient', () => {
     try {
       await initializePostgresClient();
     } catch ({ message }) {
-      expect(message).toMatch('error connecting to postgres');
+      expect(message).toBe(mockErrorMessage);
     }
   });
 });
