@@ -1,3 +1,5 @@
+"use strict";
+
 const buildDate = require('./buildDate');
 
 async function insertIntoClickhouse(client, session) {
@@ -22,11 +24,7 @@ async function insertIntoClickhouse(client, session) {
   const format = "JSONEachRow";
 
   console.log("inserting the following into clickhouse:", values[0]);
-  try {
-    await client.insert({ table, values, format });
-  } catch (error) {
-    throw new Error("error inserting into clickhouse", { cause: error });
-  }
+  await client.insert({ table, values, format });
 }
 
 module.exports = insertIntoClickhouse;

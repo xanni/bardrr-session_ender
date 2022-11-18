@@ -1,3 +1,5 @@
+"use strict";
+
 const { createClient } = require("@clickhouse/client");
 
 function initializeClickhouseClient() {

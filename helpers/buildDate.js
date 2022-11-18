@@ -1,3 +1,5 @@
+"use strict";
+
 function buildDate(timestamp) {
   let dateObj = new Date(timestamp);
   let day = dateObj.getUTCDate();
